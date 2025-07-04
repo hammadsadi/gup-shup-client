@@ -27,8 +27,20 @@ const authApi = baseApi.injectEndpoints({
         credentials: "include",
       }),
     }),
+    // Get me
+    getCurrentUser: builder.query({
+      query: () => ({
+        url: "/user/me",
+        method: "POST",
+        credentials: "include",
+      }),
+    }),
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useVerifyOtpMutation } =
-  authApi;
+export const {
+  useRegisterMutation,
+  useLoginMutation,
+  useVerifyOtpMutation,
+  useGetCurrentUserQuery,
+} = authApi;

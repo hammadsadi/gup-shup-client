@@ -17,6 +17,10 @@ import { Icons } from "@/components/modules/Shared/Icons";
 import { Link } from "react-router-dom";
 import PageHeader from "@/components/modules/Shared/PageHeader";
 import { Helmet } from "react-helmet";
+import { useLoginMutation } from "@/redux/features/auth/authApi";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/redux/hooks";
+import { setUser } from "@/redux/features/auth/authSlice";
 
 const formSchema = z.object({
   login: z
@@ -42,7 +46,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
-
+  const [loginUser] = useLoginMutation();
+  const dispatch = useAppDispatch();
   const {
     register,
     handleSubmit,
@@ -55,10 +60,18 @@ const Login = () => {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      // Backend API call here
-      console.log("User logged in:", data);
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const payload = {
+        email: data.login,
+        password: data.password,
+      };
+      const resData = await loginUser(payload).unwrap();
+      if (resData?.success) {
+        toast.success("Login successful! Redirecting to dashboard...");
+        dispatch(setUser(resData.data));
+      }
+      if (!resData?.success) {
+        toast.error(resData?.message);
+      }
     } catch (error) {
       console.error("Login error:", error);
     } finally {
