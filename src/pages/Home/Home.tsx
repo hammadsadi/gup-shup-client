@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icons } from "@/components/modules/Shared/Icons/Icons";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useAppSelector } from "@/redux/hooks";
+import { loggedInUserSelector } from "@/redux/features/auth/authSlice";
 
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -13,7 +15,8 @@ const HomeChatPage = () => {
   const [unreadMessages, setUnreadMessages] = useState(3);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [showSidebar, setShowSidebar] = useState(!isMobile);
-
+  const loggedInUser = useAppSelector(loggedInUserSelector);
+  console.log("loggedInUser", loggedInUser);
   // Sample data
   const chats = [
     {
@@ -116,6 +119,14 @@ const HomeChatPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    // Add your logout logic here
+    console.log("User logged out");
+    // Typically you would:
+    // 1. Clear user session/token
+    // 2. Redirect to login page
+  };
+
   return (
     <div
       className={cn(
@@ -162,24 +173,36 @@ const HomeChatPage = () => {
           >
             <div className="flex items-center space-x-3">
               <Avatar>
-                <AvatarImage src="/avatars/me.jpg" />
+                <AvatarImage src={loggedInUser?.photo} />
                 <AvatarFallback>ME</AvatarFallback>
               </Avatar>
               <h2 className="font-semibold">My Profile</h2>
             </div>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={cn(
-                "p-2 rounded-full",
-                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-              )}
-            >
-              {darkMode ? (
-                <Icons.sun className="h-5 w-5" />
-              ) : (
-                <Icons.moon className="h-5 w-5" />
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={cn(
+                  "p-2 rounded-full",
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                )}
+              >
+                {darkMode ? (
+                  <Icons.sun className="h-5 w-5" />
+                ) : (
+                  <Icons.moon className="h-5 w-5" />
+                )}
+              </button>
+              <button
+                onClick={handleLogout}
+                className={cn(
+                  "p-2 rounded-full",
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                )}
+                title="Logout"
+              >
+                <Icons.logout className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Search */}

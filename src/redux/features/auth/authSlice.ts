@@ -5,6 +5,7 @@ interface IUser {
   name: string;
   email: string;
   phone?: string;
+  photo?: string;
   isAccountActive?: boolean;
   id?: string;
 }
@@ -36,6 +37,7 @@ const authSlice = createSlice({
 });
 
 export const authSelector = (state: RootState) => state.auth;
+export const loggedInUserSelector = (state: RootState) => state.auth.user;
 
 // Action
 export const { setUser, logout, cleanUser } = authSlice.actions;
