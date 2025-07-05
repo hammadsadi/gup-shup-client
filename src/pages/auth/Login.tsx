@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/modules/Shared/Icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/modules/Shared/PageHeader";
 import { Helmet } from "react-helmet";
 import { useLoginMutation } from "@/redux/features/auth/authApi";
@@ -46,6 +46,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
+  const navigate = useNavigate();
   const [loginUser] = useLoginMutation();
   const dispatch = useAppDispatch();
   const {
@@ -68,6 +69,7 @@ const Login = () => {
       if (resData?.success) {
         toast.success("Login successful! Redirecting to dashboard...");
         dispatch(setUser(resData.data));
+        navigate("/");
       }
       if (!resData?.success) {
         toast.error(resData?.message);

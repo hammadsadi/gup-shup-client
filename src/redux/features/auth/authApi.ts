@@ -31,7 +31,7 @@ const authApi = baseApi.injectEndpoints({
     getCurrentUser: builder.query({
       query: () => ({
         url: "/user/me",
-        method: "POST",
+        method: "GET",
         credentials: "include",
       }),
     }),

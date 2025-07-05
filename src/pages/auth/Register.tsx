@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/modules/Shared/Icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/modules/Shared/PageHeader";
 import {
   useRegisterMutation,
@@ -53,6 +53,7 @@ const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [createUser] = useRegisterMutation();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [verifyAccountByOtp] = useVerifyOtpMutation();
   const authData = useAppSelector(authSelector);
 
@@ -102,7 +103,6 @@ const RegisterForm = () => {
   const verifyOtp = async (otpData: OtpData) => {
     setLoading(true);
     try {
-      console.log("Authh data:", authData);
       // Here you would call your backend to verify the OTP
       const data = await verifyAccountByOtp({
         id: authData?.user?.id,
@@ -111,7 +111,8 @@ const RegisterForm = () => {
       // Handle the response from the backend
       if (data.success) {
         dispatch(cleanUser());
-        toast.success("Email verified successfully! You can now login.");
+        toast.success("Email verified successfully!");
+        navigate("/");
         dispatch(setUser(data.data));
       }
       if (!data?.success) {
