@@ -1,19 +1,22 @@
 import { Navigate } from "react-router-dom";
 import { useGetCurrentUserQuery } from "@/redux/features/auth/authApi";
+import { getTokenFromCookie } from "@/utils/getTokenFromCookie";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { data: user, isLoading } = useGetCurrentUserQuery(undefined);
+  const token = getTokenFromCookie();
+
+  const { data: user, isLoading } = useGetCurrentUserQuery(undefined, {
+    skip: !token,
+  });
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (user) {
-    // Already logged in, redirect to dashboard or home
+  if (token && user) {
     return <Navigate to="/" replace />;
   }
 
-  //  Not logged in, allow access
   return <>{children}</>;
 };
 

@@ -4,8 +4,11 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icons } from "@/components/modules/Shared/Icons/Icons";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { useAppSelector } from "@/redux/hooks";
-import { loggedInUserSelector } from "@/redux/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { loggedInUserSelector, setUser } from "@/redux/features/auth/authSlice";
+import { useLogOutUserMutation } from "@/redux/features/auth/authApi";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -16,7 +19,9 @@ const HomeChatPage = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const loggedInUser = useAppSelector(loggedInUserSelector);
-  console.log("loggedInUser", loggedInUser);
+  const [logOutUser] = useLogOutUserMutation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   // Sample data
   const chats = [
     {
@@ -119,12 +124,19 @@ const HomeChatPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log("User logged out");
-    // Typically you would:
-    // 1. Clear user session/token
-    // 2. Redirect to login page
+  const handleLogout = async () => {
+    try {
+      const data = await logOutUser(undefined).unwrap();
+      if (data.success) {
+        dispatch(setUser(null));
+        toast.success("Logged out successfully!");
+        navigate("/login");
+      } else {
+        toast.error(data?.message || "Logout failed");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Something went wrong");
+    }
   };
 
   return (
