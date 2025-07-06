@@ -8,6 +8,8 @@ interface IUser {
   photo?: string;
   isAccountActive?: boolean;
   id?: string;
+  username?: string;
+  bio?: string;
 }
 interface IAuthState {
   user: IUser | null;

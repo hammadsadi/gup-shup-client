@@ -5,4 +5,5 @@ export type TUserList = {
   name: string;
   phone: string;
   photo: string;
+  bio: string;
 };

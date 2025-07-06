@@ -8,13 +8,14 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { loggedInUserSelector, setUser } from "@/redux/features/auth/authSlice";
 import { useLogOutUserMutation } from "@/redux/features/auth/authApi";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import type { EmojiClickData } from "emoji-picker-react";
 import { CheckIcon } from "@/components/modules/Home/HomeIcons/CheckIcon";
 import { ImageOffIcon } from "@/components/modules/Home/HomeIcons/ImageOffIcon";
 import { ImageIcon } from "@/components/modules/Home/HomeIcons/ImageIcon";
 import UserList from "@/components/modules/Home/ChatList/UserList";
+import type { TUserList } from "@/types";
 interface Message {
   id: string;
   text?: string;
@@ -35,7 +36,7 @@ interface Chat {
 }
 
 const HomeChatPage = () => {
-  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [activeChat, setActiveChat] = useState<TUserList | null>(null);
   const [message, setMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
   const [onlineFriends] = useState(12);
@@ -176,7 +177,7 @@ const HomeChatPage = () => {
   };
 
   const handleChatSelect = (chatId: string) => {
-    setActiveChat(chatId);
+    // setActiveChat(chatId);
     if (isMobile) {
       setShowSidebar(false);
     }
@@ -343,7 +344,12 @@ const HomeChatPage = () => {
                 <AvatarImage src={loggedInUser?.photo} />
                 <AvatarFallback>ME</AvatarFallback>
               </Avatar>
-              <h2 className="font-semibold">My Profile</h2>
+              <div className="flex flex-col">
+                <h2 className="font-semibold">{loggedInUser?.name}</h2>
+                <Link to="/edit-profile" className="inline-block text-xs">
+                  Profile Settings
+                </Link>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -414,7 +420,7 @@ const HomeChatPage = () => {
 
           {/* Chat list */}
           <div className="flex-1 overflow-y-auto">
-            <UserList />
+            <UserList activeChat={activeChat} setActiveChat={setActiveChat} />
           </div>
         </div>
       )}
@@ -438,7 +444,7 @@ const HomeChatPage = () => {
               <Icons.chevronLeft className="h-5 w-5" />
             </button>
             <h2 className="font-semibold">
-              {chats.find((c) => c.id === activeChat)?.name}
+              {/* {chats.find((c) => c.id === activeChat)?.name} */} Mobile Name
             </h2>
             <div className="w-10"></div>
           </div>
@@ -458,26 +464,20 @@ const HomeChatPage = () => {
               >
                 <div className="flex items-center space-x-3">
                   <Avatar>
-                    <AvatarImage
-                      src={chats.find((c) => c.id === activeChat)?.avatar}
-                    />
+                    <AvatarImage src={activeChat?.photo} />
                     <AvatarFallback>
-                      {chats.find((c) => c.id === activeChat)?.name.charAt(0)}
+                      {activeChat?.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold">
-                      {chats.find((c) => c.id === activeChat)?.name}
-                    </h3>
+                    <h3 className="font-semibold">{activeChat?.name}</h3>
                     <p
                       className={cn(
                         "text-xs",
                         darkMode ? "text-gray-400" : "text-gray-500"
                       )}
                     >
-                      {chats.find((c) => c.id === activeChat)?.online
-                        ? "Online"
-                        : "Offline"}
+                      Online
                     </p>
                   </div>
                 </div>
@@ -763,25 +763,17 @@ const HomeChatPage = () => {
           <div className="p-4">
             <div className="flex flex-col items-center mb-6">
               <Avatar className="h-20 w-20 mb-3">
-                <AvatarImage
-                  src={chats.find((c) => c.id === activeChat)?.avatar}
-                />
-                <AvatarFallback>
-                  {chats.find((c) => c.id === activeChat)?.name.charAt(0)}
-                </AvatarFallback>
+                <AvatarImage src={activeChat?.photo} />
+                <AvatarFallback>{activeChat?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <h4 className="font-semibold text-lg">
-                {chats.find((c) => c.id === activeChat)?.name}
-              </h4>
+              <h4 className="font-semibold text-lg">{activeChat?.name}</h4>
               <p
                 className={cn(
                   "text-sm",
                   darkMode ? "text-gray-400" : "text-gray-500"
                 )}
               >
-                {chats.find((c) => c.id === activeChat)?.online
-                  ? "Online"
-                  : "Last seen today"}
+                Online
               </p>
             </div>
 

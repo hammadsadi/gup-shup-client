@@ -5,6 +5,7 @@ import Home from "@/pages/Home/Home";
 import { createBrowserRouter } from "react-router-dom";
 import PublicRoute from "./PublicRoute";
 import ProtectedRoute from "./ProtectedRoute";
+import ProfileEditPage from "@/pages/ProfileEditPage /ProfileEditPage";
 
 const routes = createBrowserRouter([
   {
@@ -12,6 +13,14 @@ const routes = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Home />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/edit-profile",
+    element: (
+      <ProtectedRoute>
+        <ProfileEditPage />
       </ProtectedRoute>
     ),
   },

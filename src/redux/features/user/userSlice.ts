@@ -1,4 +1,3 @@
-import type { RootState } from "@/redux/store";
 import { createSlice } from "@reduxjs/toolkit";
 
 interface IUser {
