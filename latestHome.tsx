@@ -14,7 +14,6 @@ import type { EmojiClickData } from "emoji-picker-react";
 import { CheckIcon } from "@/components/modules/Home/HomeIcons/CheckIcon";
 import { ImageOffIcon } from "@/components/modules/Home/HomeIcons/ImageOffIcon";
 import { ImageIcon } from "@/components/modules/Home/HomeIcons/ImageIcon";
-import UserList from "@/components/modules/Home/ChatList/UserList";
 interface Message {
   id: string;
   text?: string;
@@ -414,7 +413,73 @@ const HomeChatPage = () => {
 
           {/* Chat list */}
           <div className="flex-1 overflow-y-auto">
-            <UserList />
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => handleChatSelect(chat.id)}
+                className={cn(
+                  "flex items-center p-3 border-b cursor-pointer hover:bg-opacity-50",
+                  darkMode
+                    ? "border-gray-700 hover:bg-gray-700"
+                    : "border-gray-200 hover:bg-gray-100",
+                  activeChat === chat.id &&
+                    (darkMode ? "bg-gray-700" : "bg-gray-100")
+                )}
+              >
+                <div className="relative mr-3">
+                  <Avatar>
+                    <AvatarImage src={chat.avatar} />
+                    <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {chat.online && (
+                    <div
+                      className={cn(
+                        "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2",
+                        darkMode
+                          ? "border-gray-800 bg-green-500"
+                          : "border-white bg-green-500"
+                      )}
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium truncate">{chat.name}</h3>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      )}
+                    >
+                      {chat.time}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p
+                      className={cn(
+                        "text-sm truncate",
+                        darkMode ? "text-gray-400" : "text-gray-600",
+                        chat.unread > 0 && "font-semibold"
+                      )}
+                    >
+                      {chat.lastMessage}
+                    </p>
+                    {chat.unread > 0 && (
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.5 rounded-full text-xs",
+                          darkMode
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-100 text-blue-800"
+                        )}
+                      >
+                        {chat.unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -740,7 +805,7 @@ const HomeChatPage = () => {
       </div>
 
       {/* Right sidebar - Activity/Details - Desktop only */}
-      {!isMobile && (
+      {activeChat && !isMobile && (
         <div
           className={cn(
             "w-64 border-l hidden lg:block",

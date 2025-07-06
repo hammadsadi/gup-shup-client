@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,30 +9,6 @@ import { loggedInUserSelector, setUser } from "@/redux/features/auth/authSlice";
 import { useLogOutUserMutation } from "@/redux/features/auth/authApi";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import EmojiPicker, { Theme } from "emoji-picker-react";
-import type { EmojiClickData } from "emoji-picker-react";
-import { CheckIcon } from "@/components/modules/Home/HomeIcons/CheckIcon";
-import { ImageOffIcon } from "@/components/modules/Home/HomeIcons/ImageOffIcon";
-import { ImageIcon } from "@/components/modules/Home/HomeIcons/ImageIcon";
-import UserList from "@/components/modules/Home/ChatList/UserList";
-interface Message {
-  id: string;
-  text?: string;
-  image?: string;
-  time: string;
-  sent: boolean;
-}
-
-interface Chat {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  avatar: string;
-  online?: boolean;
-  isGroup?: boolean;
-}
 
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -40,19 +16,14 @@ const HomeChatPage = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [onlineFriends] = useState(12);
   const [unreadMessages, setUnreadMessages] = useState(3);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const loggedInUser = useAppSelector(loggedInUserSelector);
   const [logOutUser] = useLogOutUserMutation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   // Sample data
-  const chats: Chat[] = [
+  const chats = [
     {
       id: "1",
       name: "Alex Johnson",
@@ -90,7 +61,7 @@ const HomeChatPage = () => {
     },
   ];
 
-  const messages: Message[] = activeChat
+  const messages = activeChat
     ? [
         {
           id: "1",
@@ -100,32 +71,18 @@ const HomeChatPage = () => {
         },
         {
           id: "2",
-          image:
-            "https://i1.sndcdn.com/avatars-jRXwcAeJYYa5np7a-EGDQqA-t1080x1080.jpg",
-          time: "2:32 PM",
-          sent: false,
-        },
-        {
-          id: "3",
           text: "I'm doing great! Just finished that project.",
           time: "2:32 PM",
           sent: true,
         },
         {
-          id: "4",
-          image:
-            "https://i1.sndcdn.com/artworks-fxC6ObQj6BE30rFP-iDIkEQ-t500x500.jpg",
-          time: "2:33 PM",
-          sent: true,
-        },
-        {
-          id: "5",
+          id: "3",
           text: "That's awesome! Want to grab coffee tomorrow?",
           time: "2:33 PM",
           sent: false,
         },
         {
-          id: "6",
+          id: "4",
           text: "Definitely! How about 10am at Blue Bottle?",
           time: "2:45 PM",
           sent: true,
@@ -134,6 +91,7 @@ const HomeChatPage = () => {
     : [];
 
   useEffect(() => {
+    // Simulate new message notification
     const timer = setTimeout(() => {
       if (unreadMessages < 5) {
         setUnreadMessages((prev) => prev + 1);
@@ -144,30 +102,14 @@ const HomeChatPage = () => {
   }, [unreadMessages]);
 
   useEffect(() => {
+    // Reset sidebar state when switching between mobile and desktop
     setShowSidebar(!isMobile);
   }, [isMobile]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target as Node)
-      ) {
-        setShowEmojiPicker(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const sendMessage = () => {
-    if (message.trim() || selectedImage) {
-      console.log("Message sent:", { text: message, image: selectedImage });
+    if (message.trim()) {
+      console.log("Message sent:", message);
       setMessage("");
-      setSelectedImage(null);
     }
   };
 
@@ -197,103 +139,6 @@ const HomeChatPage = () => {
     }
   };
 
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    setMessage((prev) => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-    inputRef.current?.focus();
-  };
-
-  const ImageMessage = ({
-    image,
-    time,
-    sent,
-    darkMode,
-  }: {
-    image: string;
-    time: string;
-    sent: boolean;
-    darkMode: boolean;
-  }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
-
-    return (
-      <div className="group relative max-w-[280px] md:max-w-[320px]">
-        <div
-          className={cn(
-            "relative overflow-hidden rounded-xl transition-all duration-200",
-            isLoading && "animate-pulse",
-            isError && "bg-gray-200 dark:bg-gray-700",
-            sent
-              ? darkMode
-                ? "border border-gray-600"
-                : "border border-blue-100"
-              : darkMode
-              ? "border border-gray-600"
-              : "border border-gray-200"
-          )}
-        >
-          <img
-            src={image}
-            alt="Shared content"
-            className={cn(
-              "w-full object-cover transition-opacity duration-200",
-              isLoading ? "opacity-0" : "opacity-100"
-            )}
-            onLoad={() => setIsLoading(false)}
-            onError={() => {
-              setIsLoading(false);
-              setIsError(true);
-            }}
-          />
-
-          {isLoading && (
-            <div
-              className={cn(
-                "absolute inset-0",
-                darkMode ? "bg-gray-700" : "bg-gray-200"
-              )}
-            />
-          )}
-
-          {isError && (
-            <div
-              className={cn(
-                "absolute inset-0 flex items-center justify-center",
-                darkMode ? "text-gray-400" : "text-gray-500"
-              )}
-            >
-              <ImageOffIcon className="h-8 w-8" />
-            </div>
-          )}
-        </div>
-
-        <div
-          className={cn(
-            "mt-1 flex items-center justify-end space-x-1 text-xs",
-            sent
-              ? darkMode
-                ? "text-blue-300"
-                : "text-blue-600"
-              : darkMode
-              ? "text-gray-400"
-              : "text-gray-500"
-          )}
-        >
-          <span>{time}</span>
-          {sent && (
-            <CheckIcon
-              className={cn(
-                "h-3 w-3",
-                darkMode ? "text-blue-300" : "text-blue-600"
-              )}
-            />
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div
       className={cn(
@@ -301,7 +146,7 @@ const HomeChatPage = () => {
         darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
       )}
     >
-      {/* Sidebar */}
+      {/* Sidebar - Conditionally rendered based on screen size */}
       {(showSidebar || !isMobile) && (
         <div
           className={cn(
@@ -326,7 +171,7 @@ const HomeChatPage = () => {
                 <Icons.chevronLeft className="h-5 w-5" />
               </button>
               <h2 className="font-semibold">Chats</h2>
-              <div className="w-10"></div>
+              <div className="w-10"></div> {/* Spacer for alignment */}
             </div>
           )}
 
@@ -414,7 +259,73 @@ const HomeChatPage = () => {
 
           {/* Chat list */}
           <div className="flex-1 overflow-y-auto">
-            <UserList />
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => handleChatSelect(chat.id)}
+                className={cn(
+                  "flex items-center p-3 border-b cursor-pointer hover:bg-opacity-50",
+                  darkMode
+                    ? "border-gray-700 hover:bg-gray-700"
+                    : "border-gray-200 hover:bg-gray-100",
+                  activeChat === chat.id &&
+                    (darkMode ? "bg-gray-700" : "bg-gray-100")
+                )}
+              >
+                <div className="relative mr-3">
+                  <Avatar>
+                    <AvatarImage src={chat.avatar} />
+                    <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {chat.online && (
+                    <div
+                      className={cn(
+                        "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2",
+                        darkMode
+                          ? "border-gray-800 bg-green-500"
+                          : "border-white bg-green-500"
+                      )}
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium truncate">{chat.name}</h3>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      )}
+                    >
+                      {chat.time}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p
+                      className={cn(
+                        "text-sm truncate",
+                        darkMode ? "text-gray-400" : "text-gray-600",
+                        chat.unread > 0 && "font-semibold"
+                      )}
+                    >
+                      {chat.lastMessage}
+                    </p>
+                    {chat.unread > 0 && (
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.5 rounded-full text-xs",
+                          darkMode
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-100 text-blue-800"
+                        )}
+                      >
+                        {chat.unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -440,7 +351,7 @@ const HomeChatPage = () => {
             <h2 className="font-semibold">
               {chats.find((c) => c.id === activeChat)?.name}
             </h2>
-            <div className="w-10"></div>
+            <div className="w-10"></div> {/* Spacer for alignment */}
           </div>
         )}
 
@@ -526,41 +437,32 @@ const HomeChatPage = () => {
                       msg.sent ? "justify-end" : "justify-start"
                     )}
                   >
-                    {msg.text ? (
-                      <div
+                    <div
+                      className={cn(
+                        "max-w-xs md:max-w-md px-4 py-2 rounded-lg",
+                        msg.sent
+                          ? darkMode
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-500 text-white"
+                          : darkMode
+                          ? "bg-gray-700 text-white"
+                          : "bg-white text-gray-900 border border-gray-200"
+                      )}
+                    >
+                      <p>{msg.text}</p>
+                      <p
                         className={cn(
-                          "max-w-xs md:max-w-md px-4 py-2 rounded-lg",
+                          "text-xs mt-1 text-right",
                           msg.sent
-                            ? darkMode
-                              ? "bg-blue-600 text-white"
-                              : "bg-blue-500 text-white"
+                            ? "text-blue-100"
                             : darkMode
-                            ? "bg-gray-700 text-white"
-                            : "bg-white text-gray-900 border border-gray-200"
+                            ? "text-gray-400"
+                            : "text-gray-500"
                         )}
                       >
-                        <p>{msg.text}</p>
-                        <p
-                          className={cn(
-                            "text-xs mt-1 text-right",
-                            msg.sent
-                              ? "text-blue-100"
-                              : darkMode
-                              ? "text-gray-400"
-                              : "text-gray-500"
-                          )}
-                        >
-                          {msg.time}
-                        </p>
-                      </div>
-                    ) : msg.image ? (
-                      <ImageMessage
-                        image={msg.image}
-                        time={msg.time}
-                        sent={msg.sent}
-                        darkMode={darkMode}
-                      />
-                    ) : null}
+                        {msg.time}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -575,52 +477,17 @@ const HomeChatPage = () => {
                   : "border-gray-200 bg-white"
               )}
             >
-              {/* Image preview when selected */}
-              {selectedImage && (
-                <div className="mb-3 relative">
-                  <div className="relative w-32 h-32 rounded-md overflow-hidden border">
-                    <img
-                      src={selectedImage}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={() => setSelectedImage(null)}
-                      className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full p-1"
-                    >
-                      <Icons.x className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center space-x-2">
-                <label htmlFor="image-upload">
-                  <div
-                    className={cn(
-                      "p-2 rounded-full cursor-pointer",
-                      darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                    )}
-                  >
-                    <ImageIcon className="h-5 w-5" />
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setSelectedImage(URL.createObjectURL(file));
-                        }
-                      }}
-                    />
-                  </div>
-                </label>
-
+                <button
+                  className={cn(
+                    "p-2 rounded-full",
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  )}
+                >
+                  <Icons.plus className="h-5 w-5" />
+                </button>
                 <div className="flex-1 relative">
                   <Input
-                    ref={inputRef}
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -633,26 +500,21 @@ const HomeChatPage = () => {
                         : "bg-white border-gray-300"
                     )}
                   />
-                  <div className="absolute right-2 top-2 flex space-x-1">
-                    <button
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className={cn(
-                        darkMode
-                          ? "text-gray-400 hover:text-gray-300"
-                          : "text-gray-500 hover:text-gray-600"
-                      )}
-                    >
-                      <Icons.smile className="h-5 w-5" />
-                    </button>
-                  </div>
+                  <button
+                    className={cn(
+                      "absolute right-2 top-2",
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    )}
+                  >
+                    <Icons.smile className="h-5 w-5" />
+                  </button>
                 </div>
-
                 <button
                   onClick={sendMessage}
-                  disabled={!message.trim() && !selectedImage}
+                  disabled={!message.trim()}
                   className={cn(
                     "p-2 rounded-full",
-                    message.trim() || selectedImage
+                    message.trim()
                       ? darkMode
                         ? "bg-blue-600 hover:bg-blue-700 text-white"
                         : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -664,24 +526,6 @@ const HomeChatPage = () => {
                   <Icons.send className="h-5 w-5" />
                 </button>
               </div>
-
-              {/* Emoji picker */}
-              {showEmojiPicker && (
-                <div
-                  ref={emojiPickerRef}
-                  className="absolute bottom-16 right-4 z-50"
-                >
-                  <EmojiPicker
-                    onEmojiClick={onEmojiClick}
-                    width={300}
-                    height={350}
-                    previewConfig={{ showPreview: false }}
-                    skinTonesDisabled
-                    searchDisabled
-                    theme={darkMode ? Theme.DARK : Theme.LIGHT}
-                  />
-                </div>
-              )}
             </div>
           </>
         ) : (
@@ -740,7 +584,7 @@ const HomeChatPage = () => {
       </div>
 
       {/* Right sidebar - Activity/Details - Desktop only */}
-      {!isMobile && (
+      {activeChat && !isMobile && (
         <div
           className={cn(
             "w-64 border-l hidden lg:block",
