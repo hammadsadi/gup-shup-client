@@ -11,29 +11,17 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import type { EmojiClickData } from "emoji-picker-react";
-import { CheckIcon } from "@/components/modules/Home/HomeIcons/CheckIcon";
-import { ImageOffIcon } from "@/components/modules/Home/HomeIcons/ImageOffIcon";
+import Lottie from "lottie-react";
+import emptyAnimation from "../../assets/animated-otfound.json";
 import { ImageIcon } from "@/components/modules/Home/HomeIcons/ImageIcon";
 import UserList from "@/components/modules/Home/ChatList/UserList";
 import type { TUserList } from "@/types";
-interface Message {
-  id: string;
-  text?: string;
-  image?: string;
-  time: string;
-  sent: boolean;
-}
-
-interface Chat {
-  id: string;
-  name: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  avatar: string;
-  online?: boolean;
-  isGroup?: boolean;
-}
+import ChatNotFound from "@/components/modules/Home/ChatNotFound/ChatNotFound";
+import { format } from "date-fns";
+import {
+  useCreateChatMutation,
+  useGetAllChatsQuery,
+} from "@/redux/features/chat/chatApi";
 
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<TUserList | null>(null);
@@ -51,88 +39,14 @@ const HomeChatPage = () => {
   const dispatch = useAppDispatch();
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Sample data
-  const chats: Chat[] = [
-    {
-      id: "1",
-      name: "Alex Johnson",
-      lastMessage: "See you tomorrow!",
-      time: "2:45 PM",
-      unread: 2,
-      avatar: "/avatars/alex.jpg",
-      online: true,
-    },
-    {
-      id: "2",
-      name: "Design Team",
-      lastMessage: "Maria: I uploaded the new assets",
-      time: "11:30 AM",
-      unread: 0,
-      avatar: "/avatars/team.jpg",
-      isGroup: true,
-    },
-    {
-      id: "3",
-      name: "Sarah Williams",
-      lastMessage: "Thanks for the help!",
-      time: "Yesterday",
-      unread: 1,
-      avatar: "/avatars/sarah.jpg",
-      online: true,
-    },
-    {
-      id: "4",
-      name: "David Kim",
-      lastMessage: "Let me check and get back to you",
-      time: "Monday",
-      unread: 0,
-      avatar: "/avatars/david.jpg",
-    },
-  ];
-
-  const messages: Message[] = activeChat
-    ? [
-        {
-          id: "1",
-          text: "Hey there! How are you?",
-          time: "2:30 PM",
-          sent: false,
-        },
-        {
-          id: "2",
-          image:
-            "https://i1.sndcdn.com/avatars-jRXwcAeJYYa5np7a-EGDQqA-t1080x1080.jpg",
-          time: "2:32 PM",
-          sent: false,
-        },
-        {
-          id: "3",
-          text: "I'm doing great! Just finished that project.",
-          time: "2:32 PM",
-          sent: true,
-        },
-        {
-          id: "4",
-          image:
-            "https://i1.sndcdn.com/artworks-fxC6ObQj6BE30rFP-iDIkEQ-t500x500.jpg",
-          time: "2:33 PM",
-          sent: true,
-        },
-        {
-          id: "5",
-          text: "That's awesome! Want to grab coffee tomorrow?",
-          time: "2:33 PM",
-          sent: false,
-        },
-        {
-          id: "6",
-          text: "Definitely! How about 10am at Blue Bottle?",
-          time: "2:45 PM",
-          sent: true,
-        },
-      ]
-    : [];
+  const [chatImage, setChatImage] = useState<File | null>(null);
+  const [chatCreate] = useCreateChatMutation();
+  const { data, refetch } = useGetAllChatsQuery(activeChat?.id, {
+    skip: !activeChat,
+    refetchOnMountOrArgChange: false,
+    refetchOnReconnect: false,
+  });
+  const scrollChats = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -164,11 +78,22 @@ const HomeChatPage = () => {
     };
   }, []);
 
-  const sendMessage = () => {
-    if (message.trim() || selectedImage) {
-      console.log("Message sent:", { text: message, image: selectedImage });
+  const sendMessage = async () => {
+    // if (message.trim() || selectedImage) {
+    //   console.log(chatImage);
+    //   console.log("Message sent:", { text: message, image: selectedImage });
+    //   setMessage("");
+    //   setSelectedImage(null);
+    // }
+    const payload = {
+      text: message,
+      receiverId: activeChat?.id,
+    };
+    const res = await chatCreate(payload).unwrap();
+    if (res.success) {
       setMessage("");
       setSelectedImage(null);
+      refetch();
     }
   };
 
@@ -176,8 +101,7 @@ const HomeChatPage = () => {
     setShowSidebar(!showSidebar);
   };
 
-  const handleChatSelect = (chatId: string) => {
-    // setActiveChat(chatId);
+  const handleChatSelect = () => {
     if (isMobile) {
       setShowSidebar(false);
     }
@@ -204,96 +128,12 @@ const HomeChatPage = () => {
     inputRef.current?.focus();
   };
 
-  const ImageMessage = ({
-    image,
-    time,
-    sent,
-    darkMode,
-  }: {
-    image: string;
-    time: string;
-    sent: boolean;
-    darkMode: boolean;
-  }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
-
-    return (
-      <div className="group relative max-w-[280px] md:max-w-[320px]">
-        <div
-          className={cn(
-            "relative overflow-hidden rounded-xl transition-all duration-200",
-            isLoading && "animate-pulse",
-            isError && "bg-gray-200 dark:bg-gray-700",
-            sent
-              ? darkMode
-                ? "border border-gray-600"
-                : "border border-blue-100"
-              : darkMode
-              ? "border border-gray-600"
-              : "border border-gray-200"
-          )}
-        >
-          <img
-            src={image}
-            alt="Shared content"
-            className={cn(
-              "w-full object-cover transition-opacity duration-200",
-              isLoading ? "opacity-0" : "opacity-100"
-            )}
-            onLoad={() => setIsLoading(false)}
-            onError={() => {
-              setIsLoading(false);
-              setIsError(true);
-            }}
-          />
-
-          {isLoading && (
-            <div
-              className={cn(
-                "absolute inset-0",
-                darkMode ? "bg-gray-700" : "bg-gray-200"
-              )}
-            />
-          )}
-
-          {isError && (
-            <div
-              className={cn(
-                "absolute inset-0 flex items-center justify-center",
-                darkMode ? "text-gray-400" : "text-gray-500"
-              )}
-            >
-              <ImageOffIcon className="h-8 w-8" />
-            </div>
-          )}
-        </div>
-
-        <div
-          className={cn(
-            "mt-1 flex items-center justify-end space-x-1 text-xs",
-            sent
-              ? darkMode
-                ? "text-blue-300"
-                : "text-blue-600"
-              : darkMode
-              ? "text-gray-400"
-              : "text-gray-500"
-          )}
-        >
-          <span>{time}</span>
-          {sent && (
-            <CheckIcon
-              className={cn(
-                "h-3 w-3",
-                darkMode ? "text-blue-300" : "text-blue-600"
-              )}
-            />
-          )}
-        </div>
-      </div>
-    );
-  };
+  useEffect(() => {
+    scrollChats.current?.scrollTo({
+      top: scrollChats.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [data?.data]);
 
   return (
     <div
@@ -420,7 +260,11 @@ const HomeChatPage = () => {
 
           {/* Chat list */}
           <div className="flex-1 overflow-y-auto">
-            <UserList activeChat={activeChat} setActiveChat={setActiveChat} />
+            <UserList
+              activeChat={activeChat}
+              setActiveChat={setActiveChat}
+              handleChatSelect={handleChatSelect}
+            />
           </div>
         </div>
       )}
@@ -443,9 +287,7 @@ const HomeChatPage = () => {
             >
               <Icons.chevronLeft className="h-5 w-5" />
             </button>
-            <h2 className="font-semibold">
-              {/* {chats.find((c) => c.id === activeChat)?.name} */} Mobile Name
-            </h2>
+            <h2 className="font-semibold">{activeChat?.name}</h2>
             <div className="w-10"></div>
           </div>
         )}
@@ -512,57 +354,118 @@ const HomeChatPage = () => {
 
             {/* Messages */}
             <div
+              ref={scrollChats}
               className={cn(
                 "flex-1 p-4 overflow-y-auto",
                 darkMode ? "bg-gray-900" : "bg-gray-50"
               )}
             >
               <div className="space-y-4">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex",
-                      msg.sent ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    {msg.text ? (
-                      <div
-                        className={cn(
-                          "max-w-xs md:max-w-md px-4 py-2 rounded-lg",
-                          msg.sent
-                            ? darkMode
-                              ? "bg-blue-600 text-white"
-                              : "bg-blue-500 text-white"
-                            : darkMode
-                            ? "bg-gray-700 text-white"
-                            : "bg-white text-gray-900 border border-gray-200"
-                        )}
-                      >
-                        <p>{msg.text}</p>
-                        <p
-                          className={cn(
-                            "text-xs mt-1 text-right",
-                            msg.sent
-                              ? "text-blue-100"
-                              : darkMode
-                              ? "text-gray-400"
-                              : "text-gray-500"
-                          )}
-                        >
-                          {msg.time}
+                <div
+                  className={cn(
+                    "flex-1 p-4 overflow-y-auto min-h-screen",
+                    darkMode ? "bg-gray-900" : "bg-gray-50"
+                  )}
+                >
+                  <div className="space-y-4">
+                    {data?.data?.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center mt-10 text-muted-foreground">
+                        <Lottie
+                          animationData={emptyAnimation}
+                          loop
+                          autoPlay
+                          className="w-60 h-60"
+                        />
+                        <p className="text-lg font-semibold">No messages yet</p>
+                        <p className="text-sm">
+                          Start a conversation to see messages here.
                         </p>
                       </div>
-                    ) : msg.image ? (
-                      <ImageMessage
-                        image={msg.image}
-                        time={msg.time}
-                        sent={msg.sent}
-                        darkMode={darkMode}
-                      />
-                    ) : null}
+                    ) : (
+                      data?.data?.map((chat: any) => {
+                        const isMe = chat.senderId === loggedInUser?.id;
+                        const text = chat.message?.text;
+                        const photo = chat.message?.photo;
+                        const time = format(
+                          new Date(chat.createdAt),
+                          "hh:mm a"
+                        );
+                        const status = chat.status;
+                        const avatar = isMe
+                          ? loggedInUser?.photo
+                          : chat.sender?.photo;
+                        const name = isMe
+                          ? loggedInUser?.name
+                          : chat.sender?.name;
+
+                        return (
+                          <div
+                            key={chat.id}
+                            className={cn(
+                              "flex items-end gap-2",
+                              isMe ? "justify-end" : "justify-start"
+                            )}
+                          >
+                            {/* Left avatar */}
+                            {!isMe && (
+                              <img
+                                src={avatar}
+                                alt={name}
+                                className="w-8 h-8 rounded-full border shadow-sm"
+                              />
+                            )}
+
+                            {/* Chat bubble */}
+                            <div
+                              className={cn(
+                                "relative max-w-xs md:max-w-md px-4 py-2 rounded-lg shadow",
+                                isMe
+                                  ? darkMode
+                                    ? "bg-blue-700 text-white"
+                                    : "bg-blue-100 text-black"
+                                  : darkMode
+                                  ? "bg-gray-800 text-white"
+                                  : "bg-gray-200 text-black"
+                              )}
+                            >
+                              {text && <p>{text}</p>}
+
+                              {photo && (
+                                <img
+                                  src={photo}
+                                  alt="Sent"
+                                  className="mt-2 rounded-md max-w-[200px]"
+                                />
+                              )}
+
+                              <div className="flex justify-between items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <span>{time}</span>
+                                {isMe && (
+                                  <span>
+                                    {status === "seen"
+                                      ? "✓✓ Seen"
+                                      : status === "delivered"
+                                      ? "✓✓"
+                                      : "✓ Sent"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right avatar */}
+                            {isMe && (
+                              <img
+                                src={avatar}
+                                alt={name}
+                                className="w-8 h-8 rounded-full border shadow-sm"
+                              />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
             </div>
 
@@ -612,6 +515,7 @@ const HomeChatPage = () => {
                         const file = e.target.files?.[0];
                         if (file) {
                           setSelectedImage(URL.createObjectURL(file));
+                          setChatImage(file);
                         }
                       }}
                     />
@@ -685,62 +589,16 @@ const HomeChatPage = () => {
             </div>
           </>
         ) : (
-          <div
-            className={cn(
-              "flex-1 flex flex-col items-center justify-center p-6",
-              darkMode ? "bg-gray-900" : "bg-gray-50"
-            )}
-          >
-            <div
-              className={cn(
-                "w-32 h-32 rounded-full flex items-center justify-center mb-6",
-                darkMode ? "bg-gray-800" : "bg-gray-200"
-              )}
-            >
-              <Icons.messageSquare
-                className={cn(
-                  "h-16 w-16",
-                  darkMode ? "text-gray-600" : "text-gray-400"
-                )}
-              />
-            </div>
-            <h2
-              className={cn(
-                "text-2xl font-bold mb-2",
-                darkMode ? "text-gray-100" : "text-gray-900"
-              )}
-            >
-              {isMobile ? "Select a chat to start" : "Select a chat"}
-            </h2>
-            <p
-              className={cn(
-                "text-center max-w-md",
-                darkMode ? "text-gray-400" : "text-gray-500"
-              )}
-            >
-              {isMobile
-                ? "Tap on a conversation to start messaging"
-                : "Choose a conversation from the sidebar to start messaging, or create a new one to connect with friends."}
-            </p>
-            {isMobile && (
-              <button
-                onClick={toggleSidebar}
-                className={cn(
-                  "mt-4 px-4 py-2 rounded-lg",
-                  darkMode
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-gray-200 hover:bg-gray-300"
-                )}
-              >
-                Show Chats
-              </button>
-            )}
-          </div>
+          <ChatNotFound
+            darkMode={darkMode}
+            isMobile={isMobile}
+            toggleSidebar={toggleSidebar}
+          />
         )}
       </div>
 
       {/* Right sidebar - Activity/Details - Desktop only */}
-      {!isMobile && (
+      {!isMobile && activeChat && (
         <div
           className={cn(
             "w-64 border-l hidden lg:block",

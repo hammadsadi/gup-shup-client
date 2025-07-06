@@ -7,9 +7,11 @@ import React from "react";
 const UserList = ({
   activeChat,
   setActiveChat,
+  handleChatSelect,
 }: {
   activeChat: TUserList | null;
   setActiveChat: React.Dispatch<React.SetStateAction<TUserList | null>>;
+  handleChatSelect: () => void;
 }) => {
   const { data } = useGetUserListQuery(undefined, {
     refetchOnMountOrArgChange: true,
@@ -20,8 +22,10 @@ const UserList = ({
       {data?.data?.map((user: TUserList) => (
         <div
           key={user.id}
-          //   onClick={() => handleChatSelect(chat.id)}
-          onClick={() => setActiveChat(user)}
+          onClick={() => {
+            handleChatSelect();
+            setActiveChat(user);
+          }}
           className={cn(
             "flex items-center p-3 border-b cursor-pointer hover:bg-opacity-50 border-gray-200 hover:bg-gray-100 ",
             activeChat?.id === user?.id && "bg-gray-100"
