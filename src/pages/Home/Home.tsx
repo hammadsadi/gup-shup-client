@@ -15,7 +15,7 @@ import Lottie from "lottie-react";
 import emptyAnimation from "../../assets/animated-otfound.json";
 import { ImageIcon } from "@/components/modules/Home/HomeIcons/ImageIcon";
 import UserList from "@/components/modules/Home/ChatList/UserList";
-import type { TUserList } from "@/types";
+import type { ISocketUser, TUserList } from "@/types";
 import ChatNotFound from "@/components/modules/Home/ChatNotFound/ChatNotFound";
 import { format } from "date-fns";
 import {
@@ -23,7 +23,7 @@ import {
   useGetAllChatsQuery,
 } from "@/redux/features/chat/chatApi";
 import uploadImage from "@/utils/uploadImageToCloudinary";
-
+import { io, Socket } from "socket.io-client";
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<TUserList | null>(null);
   const [message, setMessage] = useState("");
@@ -42,12 +42,16 @@ const HomeChatPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [chatImage, setChatImage] = useState<File | null>(null);
   const [chatCreate] = useCreateChatMutation();
+  const [socketActiveUser, setSocketActiveUser] = useState<
+    ISocketUser[] | null
+  >(null);
   const { data, refetch } = useGetAllChatsQuery(activeChat?.id, {
     skip: !activeChat,
     refetchOnMountOrArgChange: false,
     refetchOnReconnect: false,
   });
   const scrollChats = useRef<HTMLDivElement>(null);
+  const socket = useRef<Socket | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,17 +84,10 @@ const HomeChatPage = () => {
   }, []);
 
   const sendMessage = async () => {
-    // if (message.trim() || selectedImage) {
-    //   console.log(chatImage);
-    //   console.log("Message sent:", { text: message, image: selectedImage });
-    //   setMessage("");
-    //   setSelectedImage(null);
-    // }
     let payload = {
       text: message,
       receiverId: activeChat?.id,
     };
-    console.log(chatImage);
     let photoUrl = "";
     if (chatImage) {
       const imgUrl = await uploadImage(chatImage);
@@ -104,6 +101,7 @@ const HomeChatPage = () => {
     if (res.success) {
       setMessage("");
       setSelectedImage(null);
+      setChatImage(null);
       refetch();
     }
   };
@@ -146,6 +144,17 @@ const HomeChatPage = () => {
     });
   }, [data?.data]);
 
+  // Socket.io connection
+  useEffect(() => {
+    // Create a new socket connection
+    socket.current = io("ws://localhost:5050/");
+    // Send a "newUser" event to the server
+    socket.current.emit("newUser", loggedInUser);
+    // Get Active Users from the server
+    socket.current.on("getAllActiveUsers", (users: any) => {
+      setSocketActiveUser(users);
+    });
+  }, []);
   return (
     <div
       className={cn(
@@ -276,6 +285,7 @@ const HomeChatPage = () => {
               setActiveChat={setActiveChat}
               handleChatSelect={handleChatSelect}
               scrollChats={scrollChats}
+              socketActiveUsers={socketActiveUser}
             />
           </div>
         </div>

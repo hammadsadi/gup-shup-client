@@ -44,3 +44,16 @@ export interface IChat {
   receiver: IUser;
 }
 export type TChatList = IChat[];
+export interface ISocketUser {
+  socketId: string;
+  user: {
+    id: string;
+    name: string;
+    username: string;
+    email: string;
+    phone: string;
+    photo: string;
+    accessToken: string;
+    isAccountActive: boolean;
+  };
+}
