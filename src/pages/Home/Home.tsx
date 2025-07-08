@@ -22,6 +22,7 @@ import {
   useCreateChatMutation,
   useGetAllChatsQuery,
 } from "@/redux/features/chat/chatApi";
+import uploadImage from "@/utils/uploadImageToCloudinary";
 
 const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<TUserList | null>(null);
@@ -85,11 +86,22 @@ const HomeChatPage = () => {
     //   setMessage("");
     //   setSelectedImage(null);
     // }
-    const payload = {
+    let payload = {
       text: message,
       receiverId: activeChat?.id,
     };
+    console.log(chatImage);
+    let photoUrl = "";
+    if (chatImage) {
+      const imgUrl = await uploadImage(chatImage);
+      photoUrl = imgUrl;
+    }
+    if (photoUrl) {
+      (payload as any).photo = photoUrl;
+    }
+
     const res = await chatCreate(payload).unwrap();
+    console.log(res);
     if (res.success) {
       setMessage("");
       setSelectedImage(null);
