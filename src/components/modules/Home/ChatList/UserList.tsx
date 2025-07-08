@@ -2,30 +2,37 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useGetUserListQuery } from "@/redux/features/user/userApi";
 import type { TUserList } from "@/types";
-import React from "react";
+import React, { type RefObject } from "react";
 
 const UserList = ({
   activeChat,
   setActiveChat,
   handleChatSelect,
+  scrollChats,
 }: {
   activeChat: TUserList | null;
   setActiveChat: React.Dispatch<React.SetStateAction<TUserList | null>>;
   handleChatSelect: () => void;
+  scrollChats: RefObject<HTMLDivElement | null>;
 }) => {
   const { data } = useGetUserListQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
 
+  const handleScroll = (item: TUserList) => {
+    handleChatSelect();
+    setActiveChat(item);
+    scrollChats.current?.scrollTo({
+      top: scrollChats.current.scrollHeight,
+      behavior: "smooth",
+    });
+  };
   return (
     <div className="space-y-1">
       {data?.data?.map((user: TUserList) => (
         <div
           key={user.id}
-          onClick={() => {
-            handleChatSelect();
-            setActiveChat(user);
-          }}
+          onClick={() => handleScroll(user)}
           className={cn(
             "flex items-center p-3 border-b cursor-pointer hover:bg-opacity-50 border-gray-200 hover:bg-gray-100 ",
             activeChat?.id === user?.id && "bg-gray-100"

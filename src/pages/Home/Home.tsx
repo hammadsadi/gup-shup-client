@@ -101,7 +101,6 @@ const HomeChatPage = () => {
     }
 
     const res = await chatCreate(payload).unwrap();
-    console.log(res);
     if (res.success) {
       setMessage("");
       setSelectedImage(null);
@@ -276,6 +275,7 @@ const HomeChatPage = () => {
               activeChat={activeChat}
               setActiveChat={setActiveChat}
               handleChatSelect={handleChatSelect}
+              scrollChats={scrollChats}
             />
           </div>
         </div>
