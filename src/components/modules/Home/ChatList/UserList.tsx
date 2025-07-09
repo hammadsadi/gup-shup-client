@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useGetUserListQuery } from "@/redux/features/user/userApi";
 import type { ISocketUser, TUserList } from "@/types";
 import React, { type RefObject } from "react";
+import { formatDistanceToNow } from "date-fns";
 
 const UserList = ({
   activeChat,
@@ -20,7 +21,6 @@ const UserList = ({
   const { data } = useGetUserListQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-
   const handleScroll = (item: TUserList) => {
     handleChatSelect();
     setActiveChat(item);
@@ -36,6 +36,27 @@ const UserList = ({
         const isActive = socketActiveUsers?.some(
           (activeUser) => activeUser.user.id === user.id
         );
+        const sent = user.sentChats?.[0];
+        const received = user.receivedChats?.[0];
+
+        const lastChat =
+          sent && received
+            ? new Date(sent.createdAt) > new Date(received.createdAt)
+              ? sent
+              : received
+            : sent || received || null;
+
+        const messageText = lastChat?.message?.text
+          ? lastChat.message.text
+          : lastChat?.message?.photo
+          ? "📷 Photo"
+          : "No messages yet";
+
+        const messageTime = lastChat
+          ? formatDistanceToNow(new Date(lastChat.createdAt), {
+              addSuffix: true,
+            })
+          : "";
 
         return (
           <div
@@ -64,10 +85,10 @@ const UserList = ({
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium truncate">{user.name}</h3>
-                <span className={cn("text-xs text-gray-500")}>Monday</span>
+                <span className="text-xs text-gray-500">{messageTime}</span>
               </div>
               <div className="flex justify-between items-center">
-                <p className={cn("text-sm truncate text-gray-600")}>Hello</p>
+                <p className="text-sm truncate text-gray-600">{messageText}</p>
               </div>
             </div>
           </div>

@@ -28,7 +28,6 @@ const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<TUserList | null>(null);
   const [message, setMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
-  const [unreadMessages, setUnreadMessages] = useState(3);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -41,6 +40,7 @@ const HomeChatPage = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [chatImage, setChatImage] = useState<File | null>(null);
   const [chatCreate] = useCreateChatMutation();
+
   const [socketActiveUser, setSocketActiveUser] = useState<
     ISocketUser[] | null
   >(null);
@@ -49,18 +49,10 @@ const HomeChatPage = () => {
     refetchOnMountOrArgChange: false,
     refetchOnReconnect: false,
   });
+  const [chatsListData, setChatsListData] = useState<any>([]);
+
   const scrollChats = useRef<HTMLDivElement>(null);
   const socket = useRef<Socket | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (unreadMessages < 5) {
-        setUnreadMessages((prev) => prev + 1);
-      }
-    }, 30000);
-
-    return () => clearTimeout(timer);
-  }, [unreadMessages]);
 
   useEffect(() => {
     setShowSidebar(!isMobile);
@@ -98,10 +90,12 @@ const HomeChatPage = () => {
 
     const res = await chatCreate(payload).unwrap();
     if (res.success) {
+      console.log("SadiSS", res);
       setMessage("");
       setSelectedImage(null);
       setChatImage(null);
       refetch();
+      socket.current?.emit("realTimeMessage", res?.data);
     }
   };
 
@@ -142,6 +136,12 @@ const HomeChatPage = () => {
       behavior: "smooth",
     });
   }, [data?.data]);
+  // Get All Chats
+  useEffect(() => {
+    if (data?.data) {
+      setChatsListData(data.data);
+    }
+  }, [data]);
 
   // Socket.io connection
   useEffect(() => {
@@ -152,6 +152,10 @@ const HomeChatPage = () => {
     // Get Active Users from the server
     socket.current.on("getAllActiveUsers", (users: any) => {
       setSocketActiveUser(users);
+    });
+    //  Get Real Time Message
+    socket.current.on("receiveMessage", (data: any) => {
+      setChatsListData((prev: any) => [...prev, data]);
     });
   }, []);
 
@@ -282,7 +286,7 @@ const HomeChatPage = () => {
             </span>
           </div>
 
-          {/* Chat list */}
+          {/* User list */}
           <div className="flex-1 overflow-y-auto">
             <UserList
               activeChat={activeChat}
@@ -394,7 +398,12 @@ const HomeChatPage = () => {
                   )}
                 >
                   <div className="space-y-4">
-                    {data?.data?.length === 0 ? (
+                    <div className="flex justify-center my-4">
+                      <span className="px-4 py-1 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                        July 9, 2025
+                      </span>
+                    </div>
+                    {chatsListData?.length === 0 ? (
                       <div className="flex flex-col items-center justify-center text-center mt-10 text-muted-foreground">
                         <Lottie
                           animationData={emptyAnimation}
@@ -408,7 +417,7 @@ const HomeChatPage = () => {
                         </p>
                       </div>
                     ) : (
-                      data?.data?.map((chat: any) => {
+                      chatsListData?.map((chat: any) => {
                         const isMe = chat.senderId === loggedInUser?.id;
                         const text = chat.message?.text;
                         const photo = chat.message?.photo;

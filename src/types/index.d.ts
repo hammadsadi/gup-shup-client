@@ -1,22 +1,46 @@
-export type TUserList = {
-  email: string;
-  id: string;
-  isAccountActive: boolean;
-  name: string;
-  phone: string;
-  photo: string;
-  bio: string;
-};
-// Message model
-export interface IMessage {
+// export type TUserList = {
+//   email: string;
+//   id: string;
+//   isAccountActive: boolean;
+//   name: string;
+//   phone: string;
+//   photo: string;
+//   bio: string;
+// };
+export type TMessage = {
   id: string;
   text: string | null;
   photo: string | null;
-  emoji: string | null;
-  link: string | null;
+  emoji?: string | null;
+  link?: string | null;
   createdAt: string;
-  updatedAt: string;
-}
+};
+
+export type TChatSender = {
+  id: string;
+  name: string;
+  photo: string;
+  username: string;
+};
+
+export type TChatItem = {
+  id: string;
+  createdAt: string;
+  message: TMessage;
+  sender: TChatSender;
+};
+
+export type TUserList = {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  phone: string;
+  photo: string;
+  isAccountActive: boolean;
+  sentChats: TChatItem[];
+  receivedChats: TChatItem[];
+};
 
 // User model (sender/receiver)
 export interface IUser {
@@ -39,7 +63,7 @@ export interface IChat {
   theme: string | null;
 
   // Relations
-  message: IMessage;
+  message: TMessage;
   sender: IUser;
   receiver: IUser;
 }
