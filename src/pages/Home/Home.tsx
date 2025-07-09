@@ -28,7 +28,6 @@ const HomeChatPage = () => {
   const [activeChat, setActiveChat] = useState<TUserList | null>(null);
   const [message, setMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
-  const [onlineFriends] = useState(12);
   const [unreadMessages, setUnreadMessages] = useState(3);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -155,6 +154,11 @@ const HomeChatPage = () => {
       setSocketActiveUser(users);
     });
   }, []);
+
+  // Get Single Active User Info
+  const singleActiveUSer = socketActiveUser?.some(
+    (user) => user?.user?.id === activeChat?.id
+  );
   return (
     <div
       className={cn(
@@ -274,7 +278,7 @@ const HomeChatPage = () => {
                   : "bg-green-100 text-green-800"
               )}
             >
-              {onlineFriends} online
+              {socketActiveUser?.length} online
             </span>
           </div>
 
@@ -341,7 +345,7 @@ const HomeChatPage = () => {
                         darkMode ? "text-gray-400" : "text-gray-500"
                       )}
                     >
-                      Online
+                      {singleActiveUSer ? "Online" : "Offline"}
                     </p>
                   </div>
                 </div>
@@ -653,7 +657,7 @@ const HomeChatPage = () => {
                   darkMode ? "text-gray-400" : "text-gray-500"
                 )}
               >
-                Online
+                {singleActiveUSer ? "Online" : "Offline"}
               </p>
             </div>
 
